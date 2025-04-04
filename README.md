@@ -47,7 +47,7 @@ Langkah 8: Masukkan Kode Program
 
 Langkah 9: Jalankan Program
 - Di terminal, jalankan:
-- node index.js
+  - node index.js
 - Terminal akan menampilkan URL — salin dan buka di browser
 - Login dengan akun YouTube Anda dan berikan izin akses
 - Setelah itu, browser akan mengarahkan Anda ke localhost dengan sebuah “code” — salin kodenya
