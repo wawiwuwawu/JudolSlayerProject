@@ -1,4 +1,4 @@
-<h1>Berikut adalah panduan lengkap program pembasmi komen judol:</h1>
+<h1>Berikut adalah panduan lengkap program pembasmi komen judol</h1>
 
 Langkah 1: Instal Node.js
 - Kunjungi situs resmi: https://nodejs.org/
@@ -43,7 +43,7 @@ Langkah 7: Siapkan File
 - File .env, lalu isi dengan baris berikut: VIDEO_ID=id_video_youtube_anda
 
 Langkah 8: Masukkan Kode Program
-- Salin dan tempel seluruh kode JavaScript ke dalam file index.js. Source codenya : 
+- Salin dan tempel seluruh kode JavaScript ke dalam file index.js.
 
 Langkah 9: Jalankan Program
 - Di terminal, jalankan:
