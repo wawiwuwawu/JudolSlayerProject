@@ -1,0 +1,16 @@
+{
+  "name": "judolslayerproject",
+  "version": "1.0.0",
+  "description": "<h1>Berikut adalah panduan lengkap program pembasmi komen judol</h1>",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "googleapis": "^148.0.0"
+  }
+}
