@@ -6,7 +6,7 @@ const { google } = require("googleapis");
 // Load client secrets from credentials.json
 const SCOPES = ["https://www.googleapis.com/auth/youtube.force-ssl"];
 const TOKEN_PATH = "token.json";
-const youtubeVideoID = process.env.YOUTUBE_VIDEO_ID; // Replace with your video ID
+const youtubeChannelID = process.env.YOUTUBE_CHANNEL_ID; // Replace with your video ID
 
 // Load OAuth 2.0 client
 async function authorize() {
@@ -51,9 +51,8 @@ function getNewToken(oAuth2Client) {
 }
 
 // Fetch comments
-async function fetchComments(auth) {
+async function fetchComments(auth, VIDEO_ID) {
     const youtube = google.youtube({ version: "v3", auth });
-    const VIDEO_ID = youtubeVideoID;
 
     try {
         const response = await youtube.commentThreads.list({
@@ -75,6 +74,7 @@ async function fetchComments(auth) {
                 console.log(`🚨 Spam detected: "${commentText}"`);
                 spamComments.push(commentId);
             }
+            
         });
 
         return spamComments;
@@ -87,7 +87,14 @@ async function fetchComments(auth) {
 
 function getJudolComment(text) {
     const normalizedText = text.normalize("NFKD");
-    return text !== normalizedText; // If different, the original had weird Unicode characters
+    if (text !== normalizedText) { 
+        return true
+    }
+    const blockedWords = JSON.parse(fs.readFileSync("blockedword.json"));
+
+    const lowerText = text.toLowerCase();
+
+    return blockedWords.some(word => lowerText.includes(word.toLowerCase()));
 }
 
 // Delete comments
@@ -104,17 +111,60 @@ async function deleteComments(auth, commentIds) {
     }
 }
 
+async function youtubeContentList(auth) {
+    const youtube = google.youtube({ version: "v3", auth });
+
+    try {
+    const response = await youtube.channels.list({
+        part: "contentDetails",
+        id: youtubeChannelID, // ← use forUsername if you're passing a name
+    });
+
+    const channel = response.data.items[0];
+    const uploadsPlaylistId = channel.contentDetails.relatedPlaylists.uploads;
+
+    const allVideos = [];
+    let nextPageToken = "";
+
+    do {
+        const playlistResponse = await youtube.playlistItems.list({
+            part: "snippet",
+            playlistId: uploadsPlaylistId,
+            maxResults: 50,
+            pageToken: nextPageToken,
+        });
+
+        allVideos.push(...playlistResponse.data.items);
+        nextPageToken = playlistResponse.data.nextPageToken;
+    } while (nextPageToken);
+        return allVideos;
+    } catch (error) {
+        console.error("Error fetching videos:", error);
+        return [];
+    }
+}
+
 (async () => {
     try {
         const auth = await authorize();
-        const spamComments = await fetchComments(auth);
+        const contentList = await youtubeContentList(auth);
+
+    for (const video of contentList) {
+        const title = video.snippet.title;
+        const videoId = video.snippet.resourceId.videoId;
+        console.log(`\n📹 Checking video: ${title} (ID: ${videoId})`);
+        const spamComments = await fetchComments(auth, videoId);
 
         if (spamComments.length > 0) {
-            console.log(`Found ${spamComments.length} spam comments. Deleting...`);
+            console.log(`🚫 Found ${spamComments.length} spam comments. Deleting...`);
             await deleteComments(auth, spamComments);
+            console.log("✅ Spam comments deleted.");
         } else {
-            console.log("No spam comments found.");
+            console.log("✅ No spam comments found.");
         }
+    }
+    
+        
     } catch (error) {
         console.error("Error running script:", error);
     }
