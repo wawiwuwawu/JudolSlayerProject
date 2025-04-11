@@ -107,7 +107,10 @@ async function deleteComments(auth, commentIds) {
         const commentIdsChunk = commentIds.splice(0,50);
         if (commentIdsChunk.length === 0) break;
         try {
-            await youtube.comments.setModerationStatus(commentIdsChunk, `rejected`);
+            await youtube.comments.setModerationStatus({
+                id: commentIdsChunk,
+                moderationStatus: "rejected"
+            });
             totalDeletedComments += commentIdsChunk.length;
             console.log(`Progress: ${totalDeletedComments}/${totalCommentsToBeDeleted} (${commentIds.length} remaining)
 Deleted the following comment IDs:`, commentIdsChunk);
