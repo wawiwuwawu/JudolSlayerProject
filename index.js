@@ -124,28 +124,28 @@ async function youtubeContentList(auth) {
     const youtube = google.youtube({ version: "v3", auth });
 
     try {
-    const response = await youtube.channels.list({
-        part: "contentDetails",
-        id: youtubeChannelID, // ← use forUsername if you're passing a name
-    });
-
-    const channel = response.data.items[0];
-    const uploadsPlaylistId = channel.contentDetails.relatedPlaylists.uploads;
-
-    const allVideos = [];
-    let nextPageToken = "";
-
-    do {
-        const playlistResponse = await youtube.playlistItems.list({
-            part: "snippet",
-            playlistId: uploadsPlaylistId,
-            maxResults: 50,
-            pageToken: nextPageToken,
+        const response = await youtube.channels.list({
+            part: "contentDetails",
+            id: youtubeChannelID, // ← use forUsername if you're passing a name
         });
 
-        allVideos.push(...playlistResponse.data.items);
-        nextPageToken = playlistResponse.data.nextPageToken;
-    } while (nextPageToken);
+        const channel = response.data.items[0];
+        const uploadsPlaylistId = channel.contentDetails.relatedPlaylists.uploads;
+
+        const allVideos = [];
+        let nextPageToken = "";
+
+        do {
+            const playlistResponse = await youtube.playlistItems.list({
+                part: "snippet",
+                playlistId: uploadsPlaylistId,
+                maxResults: 50,
+                pageToken: nextPageToken,
+            });
+
+            allVideos.push(...playlistResponse.data.items);
+            nextPageToken = playlistResponse.data.nextPageToken;
+        } while (nextPageToken);
         return allVideos;
     } catch (error) {
         console.error("Error fetching videos:", error);
