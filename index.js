@@ -101,42 +101,51 @@ function getJudolComment(text) {
 async function deleteComments(auth, commentIds) {
     const youtube = google.youtube({ version: "v3", auth });
 
-    for (const commentId of commentIds) {
+    const totalCommentsToBeDeleted = commentIds.length;
+    let totalDeletedComments = 0;
+    do{
+        const commentIdsChunk = commentIds.splice(0,50);
+        if (commentIdsChunk.length === 0) break;
         try {
-            await youtube.comments.delete({ id: commentId });
-            console.log(`Deleted comment: ${commentId}`);
+            await youtube.comments.setModerationStatus({
+                id: commentIdsChunk,
+                moderationStatus: "rejected"
+            });
+            totalDeletedComments += commentIdsChunk.length;
+            console.log(`Progress: ${totalDeletedComments}/${totalCommentsToBeDeleted} (${commentIds.length} remaining)
+Deleted the following comment IDs:`, commentIdsChunk);
         } catch (error) {
-            console.error(`Failed to delete comment ${commentId}:`, error.message);
+            console.error(`Failed to delete these comment IDs: ${commentIdsChunk}:`, error.message);
         }
-    }
+    } while (commentIds.length > 0);
 }
 
 async function youtubeContentList(auth) {
     const youtube = google.youtube({ version: "v3", auth });
 
     try {
-    const response = await youtube.channels.list({
-        part: "contentDetails",
-        id: youtubeChannelID, // ← use forUsername if you're passing a name
-    });
-
-    const channel = response.data.items[0];
-    const uploadsPlaylistId = channel.contentDetails.relatedPlaylists.uploads;
-
-    const allVideos = [];
-    let nextPageToken = "";
-
-    do {
-        const playlistResponse = await youtube.playlistItems.list({
-            part: "snippet",
-            playlistId: uploadsPlaylistId,
-            maxResults: 50,
-            pageToken: nextPageToken,
+        const response = await youtube.channels.list({
+            part: "contentDetails",
+            id: youtubeChannelID, // ← use forUsername if you're passing a name
         });
 
-        allVideos.push(...playlistResponse.data.items);
-        nextPageToken = playlistResponse.data.nextPageToken;
-    } while (nextPageToken);
+        const channel = response.data.items[0];
+        const uploadsPlaylistId = channel.contentDetails.relatedPlaylists.uploads;
+
+        const allVideos = [];
+        let nextPageToken = "";
+
+        do {
+            const playlistResponse = await youtube.playlistItems.list({
+                part: "snippet",
+                playlistId: uploadsPlaylistId,
+                maxResults: 50,
+                pageToken: nextPageToken,
+            });
+
+            allVideos.push(...playlistResponse.data.items);
+            nextPageToken = playlistResponse.data.nextPageToken;
+        } while (nextPageToken);
         return allVideos;
     } catch (error) {
         console.error("Error fetching videos:", error);
